@@ -1,0 +1,12 @@
+group = 'com.github.skidrunner'
+version = '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+repositories {
+	jcenter()
+}
+
+
+dependencies {
+}
