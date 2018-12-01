@@ -1,6 +1,6 @@
 # Fluent-Behaviour-Tree
 
-C# behaviour tree library with a fluent API.
+Java behaviour tree library with a fluent API.
 
 For a background and walk-through please see [the accompanying article](http://www.what-could-possibly-go-wrong.com/fluent-behavior-trees-for-ai-and-game-logic/). 
 
@@ -15,129 +15,113 @@ Here are some resources to help you understand behaviour trees:
 
 ## Installation
 
-In the Visual Studio [Package Manager Console](http://docs.nuget.org/consume/package-manager-console):
-
-	PM> Install-Package FluentBehaviourTree
-
-Or clone or download the code from [the github repository](https://github.com/codecapers/fluent-behaviour-tree).
+clone or download the code from [the github repository](https://github.com/skidrunner/fluent-behaviour-tree).
 
 ## Creating a Behaviour Tree
 
-A behaviour tree is created through *BehaviourTreeBuilder*. The tree is returned when the *Build* function is called.
+A behaviour tree is created through *BehaviourTreeBuilder*. The tree is returned when the *build* function is called.
 
 	using FluentBehaviourTree;
 
 	...
 
-	IBehaviourTreeNode tree;
+	BehaviourTreeNode tree;
 
-	public void Startup()
-	{
-		var builder = new BehaviourTreeBuilder();
-		this.tree = builder
-			.Sequence("my-sequence")
-				.Do("action1",  t => 
-				{
+	public void init() {
+		var builder = ;
+		this.tree = new BehaviourTreeBuilder()
+			.startSequence("my-sequence")
+				.addAction("action1",  t -> {
 					// Action 1.
-					return BehaviourTreeStatus.Success;
+					return BehaviourTreeStatus.SUCCESS;
 				})
-				.Do("action2", t => 
-				{
+				.addAction("action2", t -> {
 					// Action 2.
-					return BehaviourTreeStatus.Success;
+					return BehaviourTreeStatus.SUCCESS;
 				})
-			.End()
-			.Build();
+			.end()
+			.build();
 	}
 
 *Tick* the behaviour tree on each *update* of your *game loop*:
 
-	public void Update(float deltaTime)
-	{
-		this.tree.Tick(new TimeData(deltaTime));
+	public void update(float deltaTime) {
+		tree.tick(deltaTime);
 	}
 
 ## Behaviour Tree Status
 
 Behaviour tree nodes return the following status codes:
 
-* *Success*: The node has finished what it was doing and succeeded.
-* *Failure*: The node has finished, but failed.
-* *Running*: The node is still working on something. 
+* *SUCCESS*: The node has finished what it was doing and succeeded.
+* *FAILURE*: The node has finished, but failed.
+* *RUNNING*: The node is still working on something. 
 
 ## Node Types
 
 ### Action / Leaf-Node
 
-Call the *Do* function to create an action node at the leaves of the behavior tree. 
+Call the *addAction* function to create an action node at the leaves of the behavior tree. 
 
-	.Do("do-something", t => 
-	{
+	.addAction("do-something", t -> {
 		// ... do something ...
 		// ... query the entity, query the environment then take some action ...
-		return BehaviourTreeStatus.Success;
+		return BehaviourTreeStatus.SUCCESS;
 	}); 
 
-The return value defines the status of the node. Return *Success*, *Failure* or *Running*.
+The return value defines the status of the node. Return *SUCCESS*, *FAILURE* or *RUNNING*.
 
 ### Sequence
 
 Runs each child node in sequence. Fails for the first child node that *fails*. Moves to the next child when the current running child *succeeds*. Stays on the current child node while it returns *running*. Succeeds when all child nodes have succeeded.
 
-	.Sequence("my-sequence")
-		.Do("action1", t => 
-		{
+	.startSequence("my-sequence")
+		.addAction("action1", t -> {
 			// Sequential action 1.
-			return BehaviourTreeStatus.Success; // Run this.
+			return BehaviourTreeStatus.SUCCESS; // Run this.
 		}) 
-		.Do("action2", t => 
-		{
+		.addAction("action2", t -> {
 			// Sequential action 2.
-			return BehaviourTreeStatus.Success; // Then run this.
+			return BehaviourTreeStatus.SUCCESS; // Then run this.
 		})
-	.End()
+	.end()
 
 ### Parallel
 
 Runs all child nodes in parallel. Continues to run until a required number of child nodes have either *failed* or *succeeded*.
 
-	int numRequiredToFail = 2;
-	int numRequiredToSucceed = 2;
+	int failureThreshold = 2;
+	int successThreshold = 2;
 
-	.Parallel("my-parallel", numRequiredToFail, numRequiredToSucceed)
-		.Do("action1", t => 
-		{
+	.startParallel("my-parallel", failureThreshold, successThreshold)
+		.addAction("action1", t -> {
 			// Parallel action 1.
-			return BehaviourTreeStatus.Running;
+			return BehaviourTreeStatus.RUNNING;
 		})
-		.Do("action2", t => 
-		{
+		.addAction("action2", t -> {
 			// Parallel action 2.
-			return BehaviourTreeStatus.Running;
+			return BehaviourTreeStatus.RUNNING;
 		})		
-	.End()
+	.end()
 
 ### Selector
 
 Runs child nodes in sequence until it finds one that *succeeds*. Succeeds when it finds the first child that *succeeds*. For child nodes that *fail* it moves forward to the next child node. While a child is *running* it stays on that child node without moving forward. 
 
-	.Selector("my-selector")
-		.Do("action1", t => 
-		{
+	.startSelector("my-selector")
+		.addAction("action1", t -> {
 			// Action 1.
-			return BehaviourTreeStatus.Failure; // Fail, move onto next child.
+			return BehaviourTreeStatus.FAILURE; // Fail, move onto next child.
 		}); 
-		.Do("action2", t => 
-		{
+		.addAction("action2", t -> {
 			// Action 2.
-			return BehaviourTreeStatus.Success; // Success, stop here.
+			return BehaviourTreeStatus.SUCCESS; // Success, stop here.
 		})		
-		.Do("action3", t => 
-		{
+		.addAction("action3", t -> {
 			// Action 3.
-			return BehaviourTreeStatus.Success; // Doesn't get this far. 
+			return BehaviourTreeStatus.SUCCESS; // Doesn't get this far. 
 		})		
-	.End()
+	.end()
 
 
 ### Condition
